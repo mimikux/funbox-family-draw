@@ -28,7 +28,7 @@
       <li>點「抽獎」後會變灰；這台裝置會自動記錄。要重置請按紅色按鈕。</li>
       <li>抽選期間為 <strong>9/4–9/5</strong>；中獎後請依券面期限到店購買，勿抽自己無法到場的店。</li>
       <li>萬一抽中 <span class="danger">❌請不要自己點選「使用優惠券」！</span> 兌換券由店員操作，點開可能失效。</li>
-      <li>感謝大家幫忙，阿平感恩🤣</li>
+      <li>感謝大家幫忙，阿平愛你喔😍</li>
     </ol></div>
   </section>
 
@@ -71,7 +71,7 @@
   function hash(s){ let h=2166136261; for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619); } return (h>>>0).toString(36); }
   function cleanProduct(s){ return s.replace(/\s+/g,' ').trim(); }
   function itemKey(city,store,product){ return 'draw-'+hash([city,store,cleanProduct(product).replace(/（\$?[\d,]+）/g,'')].join('|')); }
-  function isExcluded(product){ return EXCLUDE_CODE.test(product) || EXCLUDE_WORDS.test(product); }
+  function isExcluded(product){ return EXCLUDE_CODE.test(product) || EXCLUDE_WORDS.test(product) || /BX-00\s*暴風天馬3-70RA/i.test(product); }
   function inWave(startText){ return WAVE_DATES.some(d=>startText.includes(d)); }
   function pad(n){return String(n).padStart(2,'0');}
   function parseDateTime(s){
