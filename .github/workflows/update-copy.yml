@@ -1,0 +1,29 @@
+name: Apply requested copy update
+on:
+  push:
+    paths:
+      - '.github/workflows/update-copy.yml'
+permissions:
+  contents: write
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Update heading and cheer text
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          s = s.replace('<h1>9/4–9/5｜親友幫抽抽</h1>', '<h1>9/4–9/5｜親友幫抽抽2</h1>')
+          s = s.replace('煩請各位親友抽起來，原價陀螺戰士阿平感謝您！', '感謝各位親友，原價陀螺戰士阿平愛你唷😍！')
+          p.write_text(s, encoding='utf-8')
+          PY
+      - name: Commit update
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git diff --cached --quiet || git commit -m 'Update family draw heading copy'
+          git push
