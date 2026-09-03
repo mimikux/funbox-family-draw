@@ -1,0 +1,31 @@
+name: Assemble HQ family photos
+
+on:
+  push:
+    branches: ["photo-hq-upload"]
+    paths:
+      - '.github/workflows/assemble-hq-photos.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  assemble:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Assemble verified WebP files
+        run: |
+          cat photo-parts/aping-win.part.* | base64 -d > assets/aping-win.webp
+          cat photo-parts/aping-funbox.part.* | base64 -d > assets/aping-funbox.webp
+          file assets/aping-win.webp assets/aping-funbox.webp
+          test "$(stat -c%s assets/aping-win.webp)" -gt 19000
+          test "$(stat -c%s assets/aping-funbox.webp)" -gt 28000
+      - name: Commit assembled assets
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          rm -rf photo-parts .github/workflows/assemble-hq-photos.yml
+          git add assets/aping-win.webp assets/aping-funbox.webp photo-parts .github/workflows/assemble-hq-photos.yml
+          git commit -m 'Upgrade family photos to higher quality independent assets'
+          git push
