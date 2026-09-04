@@ -127,7 +127,13 @@
     const el=$('#filters');
     const counts=new Map();
     state.entries.forEach(x=>counts.set(x.city,(counts.get(x.city)||0)+1));
-    const cities=[...counts.keys()].sort((a,b)=>a.localeCompare(b,'zh-Hant'));
+    const cityOrder = ['基隆','台北','新北','桃園','新竹市','新竹縣','苗栗','台中','彰化','南投','雲林','嘉義市','嘉義縣','台南','高雄','屏東','澎湖','金門','連江','宜蘭','花蓮','台東'];
+    const cityRank = city => {
+      const c = city.replace(/臺/g,'台');
+      const i = cityOrder.findIndex(name => c.includes(name) || name.includes(c));
+      return i < 0 ? cityOrder.length : i;
+    };
+    const cities=[...counts.keys()].sort((a,b)=>cityRank(a)-cityRank(b) || a.localeCompare(b,'zh-Hant'));
     el.innerHTML='';
     ['全部',...cities].forEach(city=>{
       const b=document.createElement('button');
