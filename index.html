@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>9/4–9/5 親友幫抽抽｜FUNBOX</title>
+<title>本週親友幫抽抽｜FUNBOX</title>
 <style>
 :root{--green:#21a366;--orange:#e58b2a;--purple:#7453b8;--blue:#3977c5;--gray:#a7a7a7;--bg:#f5f6f8;--text:#222;--danger:#d9534f}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:18px;line-height:1.55}
@@ -14,7 +14,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h1>9/4–9/5｜親友幫抽抽2</h1>
+  <h1 id="pageTitle">本週｜親友幫抽抽2</h1>
   <div class="cheer">感謝各位親友，原價陀螺戰士阿平愛你唷😍！</div>
 
   <section class="photos" aria-label="上次抽選戰果照片">
@@ -26,7 +26,7 @@
     <div class="sub"><ol>
       <li>中獎率很低，沒中很正常。</li>
       <li>點「抽獎」後會變灰；這台裝置會自動記錄。要重置請按紅色按鈕。</li>
-      <li>抽選期間為 <strong>9/4–9/5</strong>；中獎後請依券面期限到店購買，勿抽自己無法到場的店。</li>
+      <li>抽選期間為 <strong id="waveLabel">讀取最新抽選中…</strong>；中獎後請依券面期限到店購買，勿抽自己無法到場的店。</li>
       <li>萬一抽中 <span class="danger">❌請不要自己點選「使用優惠券」！</span> 兌換券由店員操作，點開可能失效。</li>
       <li>感謝大家幫忙，阿平愛你喔😍</li>
     </ol></div>
@@ -58,8 +58,8 @@
     'https://raw.githubusercontent.com/UXUX11/funbox-line/main/index.html',
     'https://uxux11.github.io/funbox-line/'
   ];
-  const STORAGE_KEY = 'aping_beyblade_20260904_0905_visited';
-  const WAVE_DATES = ['2026/09/04','2026/09/05'];
+  let STORAGE_KEY = 'aping_beyblade_visited';
+  let WAVE_DATES = [];
   const EXCLUDE_CODE = /\b(?:BXG-\d+|BX-26|BX-33)\b/i;
   const EXCLUDE_WORDS = /(戰鬥盤|收納包|收納箱|收納盒|發射器)/i;
   const state = { entries: [], city: '全部', loadedAt: null };
@@ -71,19 +71,18 @@
   function hash(s){ let h=2166136261; for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619); } return (h>>>0).toString(36); }
   function cleanProduct(s){ return s.replace(/\s+/g,' ').trim(); }
   function itemKey(city,store,product){ return 'draw-'+hash([city,store,cleanProduct(product).replace(/（\$?[\d,]+）/g,'')].join('|')); }
-  function isExcluded(product){ return EXCLUDE_CODE.test(product) || EXCLUDE_WORDS.test(product) || /BX-00\s*暴風天馬3-70RA/i.test(product); }
+  function isExcluded(product){ return EXCLUDE_CODE.test(product) || EXCLUDE_WORDS.test(product); }
   function inWave(startText){ return WAVE_DATES.some(d=>startText.includes(d)); }
   function pad(n){return String(n).padStart(2,'0');}
   function parseDateTime(s){
-    const m=s.match(/(2026)\/(\d{2})\/(\d{2})(?:\s+(\d{1,2}):(\d{2}))?/);
+    const m=s.match(/(\d{4})\/(\d{2})\/(\d{2})(?:\s+(\d{1,2}):(\d{2}))?/);
     if(!m) return null;
     return new Date(+m[1],+m[2]-1,+m[3],m[4]===undefined?0:+m[4],m[5]===undefined?0:+m[5],0,0);
   }
   function timing(text){
     const now=new Date();
-    const startMatch=text.match(/2026\/09\/04\s+(\d{1,2}):(\d{2})/);
-    const endMatch=text.match(/~\s*(2026\/09\/0[45]\s+\d{1,2}:\d{2})/);
-    const start=startMatch?new Date(2026,8,4,+startMatch[1],+startMatch[2]):null;
+    const start=parseDateTime(text);
+    const endMatch=text.match(/~\s*(\d{4}\/\d{2}\/\d{2}\s+\d{1,2}:\d{2})/);
     const end=endMatch?parseDateTime(endMatch[1]):null;
     if(end && now>end) return {label:'已截止', cls:'closed', disabled:true};
     if(start && now<start) return {label:`${pad(start.getHours())}:${pad(start.getMinutes())} 開抽`, cls:'future', disabled:true};
@@ -91,8 +90,34 @@
     return {label:'抽選連結已公布', cls:'', disabled:false};
   }
 
+  function chooseWaveDates(doc){
+    const dates=[...new Set($$('.draw-start',doc).map(el=>{
+      const m=(el.textContent||'').match(/(\d{4}\/\d{2}\/\d{2})/);
+      return m?m[1]:null;
+    }).filter(Boolean))].sort();
+    if(!dates.length) return [];
+    const today=new Date(); today.setHours(0,0,0,0);
+    const parsed=dates.map(d=>({d,t:parseDateTime(d)})).filter(x=>x.t);
+    const upcoming=parsed.filter(x=>x.t>=today);
+    const base=upcoming.length?upcoming[0]:parsed[parsed.length-1];
+    if(!base) return [dates[dates.length-1]];
+    return [...new Set(parsed.filter(x=>Math.abs(x.t-base.t)<=86400000).map(x=>x.d))].sort();
+  }
+
+  function updateWaveCopy(){
+    if(!WAVE_DATES.length) return;
+    const short=WAVE_DATES.map(d=>{const p=d.split('/');return `${+p[1]}/${+p[2]}`;});
+    const label=short.length===1?short[0]:`${short[0]}–${short[short.length-1]}`;
+    const h=$('#pageTitle'); if(h) h.textContent=`${label}｜親友幫抽抽2`;
+    const w=$('#waveLabel'); if(w) w.textContent=label;
+    document.title=`${label} 親友幫抽抽｜FUNBOX`;
+    STORAGE_KEY='aping_beyblade_'+WAVE_DATES.join('_').replace(/\//g,'')+'_visited';
+  }
+
   function extract(html){
     const doc=new DOMParser().parseFromString(html,'text/html');
+    WAVE_DATES=chooseWaveDates(doc);
+    updateWaveCopy();
     const rows=[];
     $$('.draw-store',doc).forEach(storeEl=>{
       const city=storeEl.getAttribute('data-draw-city') || storeEl.closest('.draw-city-group')?.getAttribute('data-draw-city-group') || '其他';
