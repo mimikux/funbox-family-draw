@@ -94,7 +94,8 @@ h1{font-size:clamp(32px,6vw,46px);line-height:1.15;text-align:center;margin:4px 
   ];
 
   const ACCESSORY_WORDS = /(戰鬥盤|對戰盤|競技場|收納包|收納箱|收納盒|收納袋|發射器|握把|拉條)/i;
-  const BXG_CODE = /\bBXG-\d+\b/i;
+  const EXCLUDE_CODE = /\b(?:BXG-\d+|BX-26|BX-33)\b/i;
+  const EXCLUDE_BX00 = /\bBX-00\s*暴風天馬/i;
   const CITY_ORDER = ['基隆','台北','新北','桃園','新竹市','新竹縣','苗栗','台中','彰化','南投','雲林','嘉義市','嘉義縣','台南','高雄','屏東','澎湖','金門','連江','宜蘭','花蓮','台東'];
 
   const state = {
@@ -128,7 +129,7 @@ h1{font-size:clamp(32px,6vw,46px);line-height:1.15;text-align:center;margin:4px 
 
   function isExcluded(product){
     const p=cleanProduct(product);
-    return BXG_CODE.test(p) || ACCESSORY_WORDS.test(p);
+    return EXCLUDE_CODE.test(p) || EXCLUDE_BX00.test(p) || ACCESSORY_WORDS.test(p);
   }
 
   function parseDateOnly(s){
