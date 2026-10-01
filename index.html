@@ -47,12 +47,12 @@ h1{font-size:clamp(32px,6vw,46px);line-height:1.15;text-align:center;margin:4px 
 </head>
 <body>
 <div class="wrap">
-  <h1 id="pageTitle">本週｜親友幫抽抽2</h1>
+  <h1 id="pageTitle">本週｜親友幫抽抽</h1>
   <div class="cheer">感謝各位親友，原價陀螺戰士阿平愛你唷😍！</div>
 
   <section class="photos" aria-label="上次抽選戰果照片">
-    <div class="photo-card"><img src="https://i.urusai.cc/DK9iw.png" alt="抽中戰鬥陀螺的開心照片" referrerpolicy="no-referrer"></div>
-    <div class="photo-card"><img src="https://i.urusai.cc/125Tb.png" alt="FUNBOX 原價陀螺戰果照片" referrerpolicy="no-referrer"></div>
+    <div class="photo-card"><img src="https://i.urusai.cc/X2kWJ" alt="抽中戰鬥陀螺的開心照片" referrerpolicy="no-referrer"></div>
+    <div class="photo-card"><img src="https://i.urusai.cc/mQoKV.png" alt="FUNBOX 原價陀螺戰果照片" referrerpolicy="no-referrer"></div>
   </section>
 
   <section class="hero">
@@ -82,7 +82,7 @@ h1{font-size:clamp(32px,6vw,46px);line-height:1.15;text-align:center;margin:4px 
   </div>
 
   <main id="list"></main>
-  <div class="footer">資料來源：<a class="source-link" href="https://uxux11.github.io/funbox-line/" target="_blank" rel="noopener">FUNBOX 抽選監控頁</a>。每次開啟會抓最新資料；頁面保持開啟時每小時自動同步。</div>
+  <div class="footer">資料來源：<a class="source-link" href="https://uxux11.github.io/funbox-line/" target="_blank" rel="noopener">FUNBOX 抽選監控頁</a>。每次開啟會抓最新資料；頁面保持開啟時每小時自動同步。<br><a class="source-link" href="admin.html">⚙ 後台設定</a></div>
 </div>
 <script>
 (() => {
@@ -127,9 +127,24 @@ h1{font-size:clamp(32px,6vw,46px);line-height:1.15;text-align:center;margin:4px 
     return 'draw-'+hash([city,store,cleanProduct(product).replace(/（\$?[\d,，／/]+.*?）/g,'')].join('|'));
   }
 
+  function adminProductKey(product){
+    return cleanProduct(product)
+      .replace(/\s*[（(]\s*\$[^）)]*[）)]\s*$/,'')
+      .trim();
+  }
+  function adminStorageKey(){
+    const a=(state.waveStart||'pending').replaceAll('/','');
+    const b=(state.waveEnd||'pending').replaceAll('/','');
+    return `aping_admin_excluded_${a}_${b}`;
+  }
+  function readAdminExcluded(){
+    try { return new Set(JSON.parse(localStorage.getItem(adminStorageKey()) || '[]')); }
+    catch { return new Set(); }
+  }
   function isExcluded(product){
     const p=cleanProduct(product);
-    return EXCLUDE_CODE.test(p) || EXCLUDE_BX00.test(p) || ACCESSORY_WORDS.test(p);
+    if(EXCLUDE_CODE.test(p) || EXCLUDE_BX00.test(p) || ACCESSORY_WORDS.test(p)) return true;
+    return readAdminExcluded().has(adminProductKey(p));
   }
 
   function parseDateOnly(s){
@@ -172,7 +187,7 @@ h1{font-size:clamp(32px,6vw,46px);line-height:1.15;text-align:center;margin:4px 
     state.waveEnd=wave.endKey || wave.startKey;
     state.waveLabel=state.waveStart===state.waveEnd ? shortDate(state.waveStart) : `${shortDate(state.waveStart)}–${shortDate(state.waveEnd)}`;
     state.storageKey=`aping_beyblade_${state.waveStart.replaceAll('/','')}_${state.waveEnd.replaceAll('/','')}_visited`;
-    $('#pageTitle').textContent=`${state.waveLabel}｜親友幫抽抽2`;
+    $('#pageTitle').textContent=`${state.waveLabel}｜親友幫抽抽`;
     $('#waveLabel').textContent=state.waveLabel;
     document.title=`${state.waveLabel} 親友幫抽抽｜FUNBOX`;
   }
@@ -372,6 +387,9 @@ h1{font-size:clamp(32px,6vw,46px);line-height:1.15;text-align:center;margin:4px 
   setInterval(()=>load(false),60*60*1000);
   document.addEventListener('visibilitychange',()=>{
     if(document.visibilityState==='visible' && (!state.loadedAt || Date.now()-state.loadedAt.getTime()>10*60*1000)) load(false);
+  });
+  window.addEventListener('storage',e=>{
+    if(e.key && e.key.startsWith('aping_admin_excluded_')) load(false);
   });
 })();
 </script>
